@@ -1,7 +1,10 @@
 from datetime import datetime, date
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from sqlalchemy import Integer, String, func, Column, ForeignKey, Boolean
+import sqlalchemy as sa
 from sqlalchemy.sql.sqltypes import DateTime, Date
+from enum import Enum
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 
 
 class Base(DeclarativeBase):
@@ -26,6 +29,11 @@ class Contact(Base):
     user = relationship("User", backref="notes")
 
 
+class UserRole(Enum):
+    USER = "user"
+    ADMIN = "admin"
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
@@ -35,3 +43,4 @@ class User(Base):
     created_at = Column(DateTime, default=func.now())
     avatar = Column(String(255), nullable=True)
     confirmed = Column(Boolean, default=False)
+    role = Column(PgEnum(UserRole, name="role"), nullable=False, default=UserRole.USER)

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from src.api import contacts, auth, users
+from src.api import contacts, auth, users, admin_dashboard
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -25,6 +25,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 app.include_router(contacts.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
+app.include_router(admin_dashboard.router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
