@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from src.api import contacts, auth, users
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -10,6 +11,7 @@ origins = ["<http://localhost:3000>"]
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.exception_handler(RateLimitExceeded)

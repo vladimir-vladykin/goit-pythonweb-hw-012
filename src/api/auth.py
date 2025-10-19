@@ -1,13 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    BackgroundTasks,
+    Request,
+    Form,
+)
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.templating import Jinja2Templates
 from src.schemas import UserCreate, Token, User, RequestEmail
 from src.services.auth import create_access_token, Hash, get_email_from_token
 from src.services.users import UserService
 from src.database.db import get_db
 from src.services.email import send_confirm_email, send_reset_email
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from typing import Annotated
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+limiter = Limiter(key_func=get_remote_address)
+templates = Jinja2Templates(directory="templates")
 
 
 @router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
@@ -73,7 +88,7 @@ async def confirmed_email(token: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error"
         )
     if user.confirmed:
-        return {"message": "Ваша електронна пошта вже підтверджена"}
+        return {"message": "Email already confirmed"}
     await user_service.confirmed_email(email)
     return {"message": "Email confirmed successfully"}
 
@@ -113,3 +128,41 @@ async def request_reset_password(
         )
 
     return {"message": "Check your email"}
+
+
+@router.get(
+    "/password_reset/{token}",
+    description="No more than 10 requests per minute",
+)
+@limiter.limit("10/minute")
+async def get_password_reset_page(request: Request):
+    return templates.TemplateResponse("reset_password_form.html", {"request": request})
+
+
+@router.post(
+    "/password_reset/{token}",
+    description="No more than 10 requests per minute",
+)
+async def reset_password(
+    token: str,
+    new_password: Annotated[str, Form()],
+    db: Session = Depends(get_db),
+):
+    if new_password == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No password provided"
+        )
+
+    email = await get_email_from_token(token)
+    user_service = UserService(db)
+    user = await user_service.get_user_by_email(email)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User is no longer exists"
+        )
+
+    hashed_password = Hash().get_password_hash(new_password)
+    await user_service.update_user_password(email, hashed_password)
+
+    return {"message": "Password updated successfully"}
