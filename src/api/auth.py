@@ -5,7 +5,7 @@ from src.schemas import UserCreate, Token, User, RequestEmail
 from src.services.auth import create_access_token, Hash, get_email_from_token
 from src.services.users import UserService
 from src.database.db import get_db
-from src.services.email import send_email
+from src.services.email import send_confirm_email, send_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -36,7 +36,7 @@ async def register_user(
     new_user = await user_service.create_user(user_data)
 
     background_tasks.add_task(
-        send_email, new_user.email, new_user.username, request.base_url
+        send_confirm_email, new_user.email, new_user.username, request.base_url
     )
     return new_user
 
@@ -92,6 +92,24 @@ async def request_email(
         return {"message": "Email already confirmed"}
     if user:
         background_tasks.add_task(
-            send_email, user.email, user.username, request.base_url
+            send_confirm_email, user.email, user.username, request.base_url
         )
+    return {"message": "Check your email"}
+
+
+@router.post("/request_reset_password")
+async def request_reset_password(
+    body: RequestEmail,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user_service = UserService(db)
+    user = await user_service.get_user_by_email(body.email)
+
+    if user is not None:
+        background_tasks.add_task(
+            send_reset_email, user.email, user.username, request.base_url
+        )
+
     return {"message": "Check your email"}

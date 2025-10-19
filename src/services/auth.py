@@ -38,10 +38,18 @@ async def create_access_token(data: dict, expires_delta: Optional[int] = None):
     return encoded_jwt
 
 
-def create_email_token(data: dict):
+def create_email_confirm_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(days=7)
     to_encode.update({"iat": datetime.now(UTC), "exp": expire})
+    token = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+    return token
+
+
+def create_password_reset_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(UTC) + timedelta(hours=24)
+    to_encode.update({"iat": datetime.now(UTC), "exp": expire, "reset_password": True})
     token = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
     return token
 
