@@ -44,3 +44,7 @@ class User(Base):
     avatar = Column(String(255), nullable=True)
     confirmed = Column(Boolean, default=False)
     role = Column(PgEnum(UserRole, name="role"), nullable=False, default=UserRole.USER)
+
+    # to simplify caching
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}

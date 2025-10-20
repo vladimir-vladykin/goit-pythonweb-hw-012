@@ -28,7 +28,9 @@ dependencies = [
     "pytest-asyncio (>=1.2.0,<2.0.0)",
     "pytest-cov (>=7.0.0,<8.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
-    "aiosqlite (>=0.21.0,<0.22.0)"
+    "aiosqlite (>=0.21.0,<0.22.0)",
+    "redis (>=6.4.0,<7.0.0)",
+    "redis-lru (>=0.1.2,<0.2.0)"
 ]
 
 [tool.poetry]

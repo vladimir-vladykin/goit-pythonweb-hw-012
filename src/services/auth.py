@@ -6,11 +6,14 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
+import json
 
 from src.database.db import get_db
 from src.conf.config import settings
 from src.services.users import UserService
 from src.database.models import User, UserRole
+from src.schemas import User as SchemaUser
+from src.database.cache import get_from_cache, put_into_cache
 
 
 class Hash:
@@ -87,10 +90,20 @@ async def get_current_user(
             raise credentials_exception
     except JWTError as e:
         raise credentials_exception
+
     user_service = UserService(db)
-    user = await user_service.get_user_by_username(username)
+
+    cached_user = get_from_cache(username)
+    user = (
+        User(**json.loads(cached_user))
+        if cached_user is not None
+        else await user_service.get_user_by_username(username)
+    )
     if user is None:
         raise credentials_exception
+    if cached_user is None:
+        put_into_cache(username, json.dumps(user.as_dict(), default=str))
+
     return user
 
 
