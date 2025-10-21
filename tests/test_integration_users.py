@@ -3,12 +3,7 @@ from unittest.mock import patch, Mock
 from conftest import test_user
 
 
-@patch("redis.Redis")
-def test_get_me(mock_redis_class, client, get_token):
-    mock_redis_instance = Mock()
-    mock_redis_instance.get.return_value = None
-    mock_redis_class.return_value = mock_redis_instance
-
+def test_get_me(client, get_token):
     token = get_token
     headers = {"Authorization": f"Bearer {token}"}
     response = client.get("api/users/me", headers=headers)
