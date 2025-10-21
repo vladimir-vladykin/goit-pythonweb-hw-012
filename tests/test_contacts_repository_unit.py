@@ -115,6 +115,22 @@ async def test_update_contact(
     mock_session.refresh.assert_awaited_once_with(existing_contact_model)
 
 
+@pytest.mark.asyncio
+async def test_search_contacts(
+    user: User, contact_repository: ContactRepository, mock_session: AsyncMock
+):
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [create_contact(user)]
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    contacts = await contact_repository.search_contacts(
+        user=user, first_name="John", last_name=None, email=None, skip=0, limit=10
+    )
+
+    assert len(contacts) == 1
+    assert contacts[0].first_name == "John"
+
+
 def create_contact(user: User) -> Contact:
     return Contact(id=1, first_name="John", last_name="Doe", user=user)
 
