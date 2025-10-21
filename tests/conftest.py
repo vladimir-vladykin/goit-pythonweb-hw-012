@@ -10,6 +10,7 @@ from main import app
 from src.database.models import Base, User
 from src.database.db import get_db
 from src.services.auth import create_access_token, Hash
+from src.database.cache import Cache, get_cache
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
@@ -28,6 +29,17 @@ test_user = {
     "email": "rontest@test.me",
     "password": "12345678",
 }
+
+
+class TestCache(Cache):
+    def get(self, key):
+        return None
+
+    def put(self, key, value):
+        pass
+
+
+test_cache = TestCache()
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -63,7 +75,11 @@ def client():
                 await session.rollback()
                 raise
 
+    def override_get_cache() -> Cache:
+        return test_cache
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_cache] = override_get_cache
 
     yield TestClient(app)
 

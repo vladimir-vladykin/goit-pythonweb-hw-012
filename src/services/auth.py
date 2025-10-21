@@ -13,7 +13,7 @@ from src.conf.config import settings
 from src.services.users import UserService
 from src.database.models import User, UserRole
 from src.schemas import User as SchemaUser
-from src.database.cache import get_from_cache, put_into_cache
+from src.database.cache import get_cache, Cache
 
 
 class Hash:
@@ -73,7 +73,9 @@ async def get_email_from_token(token: str):
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+    cache: Cache = Depends(get_cache),
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -93,7 +95,7 @@ async def get_current_user(
 
     user_service = UserService(db)
 
-    cached_user = get_from_cache(username)
+    cached_user = cache.get(username)
     user = (
         User(**json.loads(cached_user))
         if cached_user is not None
@@ -102,7 +104,7 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     if cached_user is None:
-        put_into_cache(username, json.dumps(user.as_dict(), default=str))
+        cache.put(username, json.dumps(user.as_dict(), default=str))
 
     return user
 

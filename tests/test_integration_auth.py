@@ -15,7 +15,7 @@ user_data = {
 
 def test_signup(client, monkeypatch):
     mock_send_email = Mock()
-    monkeypatch.setattr("src.api.auth.send_email", mock_send_email)
+    monkeypatch.setattr("src.api.auth.send_confirm_email", mock_send_email)
     response = client.post("api/auth/register", json=user_data)
     assert response.status_code == 201, response.text
     data = response.json()
@@ -27,7 +27,7 @@ def test_signup(client, monkeypatch):
 
 def test_repeat_signup(client, monkeypatch):
     mock_send_email = Mock()
-    monkeypatch.setattr("src.api.auth.send_email", mock_send_email)
+    monkeypatch.setattr("src.api.auth.send_confirm_email", mock_send_email)
     response = client.post("api/auth/register", json=user_data)
     assert response.status_code == 409, response.text
     data = response.json()
