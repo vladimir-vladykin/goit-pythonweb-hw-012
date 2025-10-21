@@ -136,7 +136,7 @@ async def request_reset_password(
 )
 @limiter.limit("10/minute")
 async def get_password_reset_page(request: Request):
-    return templates.TemplateResponse("reset_password_form.html", {"request": request})
+    return templates.TemplateResponse(request, "reset_password_form.html")
 
 
 @router.post(

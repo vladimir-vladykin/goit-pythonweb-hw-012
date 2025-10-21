@@ -67,7 +67,7 @@ async def get_email_from_token(token: str):
         return email
     except JWTError as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Wrong token",
         )
 
